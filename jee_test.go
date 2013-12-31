@@ -3,9 +3,9 @@ package jee
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"reflect"
 	"testing"
-    "io/ioutil"
 )
 
 type Test struct {
@@ -394,7 +394,7 @@ var Tests = []Test{
 		exp:    `$contains("http://en.wikipedia.org/wiki/List_of_animals_with_fraudulent_diplomas","dogs")`,
 		result: `false`,
 	},
-    // needs a special test ... $keys returns an unordered list
+	// needs a special test ... $keys returns an unordered list
 	//Test{
 	//            exp:`$keys(.arrayObj[0])`,
 	//            result:`["val","name","sameStr","hasKey","nil","array","nested","bool","sameNum"]`,
@@ -432,7 +432,7 @@ var Tests = []Test{
 func TestAll(t *testing.T) {
 	var umsg BMsg
 
-    testFile, _ := ioutil.ReadFile("test.json")
+	testFile, _ := ioutil.ReadFile("test.json")
 
 	json.Unmarshal(testFile, &umsg)
 
@@ -472,8 +472,8 @@ func TestAll(t *testing.T) {
 
 func BenchmarkJSON(b *testing.B) {
 	var umsg BMsg
-    testFile, _ := ioutil.ReadFile("test.json")
-    json.Unmarshal(testFile, &umsg)
+	testFile, _ := ioutil.ReadFile("test.json")
+	json.Unmarshal(testFile, &umsg)
 	tokenized, _ := Lexer(`.['arrayObj'][2]['nested'][]['id']`)
 	tree, _ := Parser(tokenized)
 	b.ResetTimer()
@@ -484,8 +484,8 @@ func BenchmarkJSON(b *testing.B) {
 
 func BenchmarkMath(b *testing.B) {
 	var umsg BMsg
-    testFile, _ := ioutil.ReadFile("test.json")
-    json.Unmarshal(testFile, &umsg)
+	testFile, _ := ioutil.ReadFile("test.json")
+	json.Unmarshal(testFile, &umsg)
 	tokenized, _ := Lexer(`100 * -($sum(.arrayInt) + 5)`)
 	tree, _ := Parser(tokenized)
 	b.ResetTimer()
@@ -496,8 +496,8 @@ func BenchmarkMath(b *testing.B) {
 
 func BenchmarkRegex(b *testing.B) {
 	var umsg BMsg
-    testFile, _ := ioutil.ReadFile("test.json")
-    json.Unmarshal(testFile, &umsg)
+	testFile, _ := ioutil.ReadFile("test.json")
+	json.Unmarshal(testFile, &umsg)
 	tokenized, _ := Lexer(`$regex(.string, "hello*")`)
 	tree, _ := Parser(tokenized)
 	b.ResetTimer()
@@ -508,8 +508,8 @@ func BenchmarkRegex(b *testing.B) {
 
 func BenchmarkContains(b *testing.B) {
 	var umsg BMsg
-    testFile, _ := ioutil.ReadFile("test.json")
-    json.Unmarshal(testFile, &umsg)
+	testFile, _ := ioutil.ReadFile("test.json")
+	json.Unmarshal(testFile, &umsg)
 	tokenized, _ := Lexer(`$contains(.string, "hello")`)
 	tree, _ := Parser(tokenized)
 	b.ResetTimer()

@@ -880,8 +880,8 @@ func Eval(t *TokenTree, msg BMsg) (interface{}, error) {
 				return nil, err
 			}
 			// need to do comparisons for falsy-null || X
-			// as well as != and == 
-			
+			// as well as != and ==
+
 			switch ta := a.(type) {
 			case float64:
 				bf, ok := b.(float64)
