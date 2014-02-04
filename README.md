@@ -81,6 +81,7 @@ query all objects inside array 'a' for key 'id':
 Converts `x` to a float64. If `x` is a bool, 1 is returned for true and 0 for false. If `x` is nil, 0 is returned. 
 
 `$str(x {bool, float64, string, nil, object))`
+
 Converts `x` to a string. If `x` is a bool, "true" is returned for true and "false" for false. "null" is returned for nil. If `x` is an object it is marshaled into a JSON string. 
 
 ###### math
