@@ -110,7 +110,7 @@ Returns the length of array `a`.
 
 `$has( a {[]bool, []float64, []string, []nil}, val {bool, float64, string, nil} )`
 
-Checks to see if array `a` contains `val`. Returns bool. Does not work for objects. 
+Checks to see if array `a` contains `val`. Returns bool. `val` cannot be an object.
 
 `$sum(a []float64)`
 
