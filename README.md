@@ -76,86 +76,86 @@ query all objects inside array 'a' for key 'id':
 
 ###### types
 
-`$num(x {bool, float64, string, nil})`
+**`$num(x {bool, float64, string, nil})`**
 
 Converts `x` to a float64. If `x` is a bool, 1 is returned for true and 0 for false. If `x` is nil, 0 is returned. 
 
-`$str(x {bool, float64, string, nil, object))`
+**`$str(x {bool, float64, string, nil, object))`**
 
 Converts `x` to a string. If `x` is a bool, "true" is returned for true and "false" for false. "null" is returned for nil. If `x` is an object it is marshaled into a JSON string. 
 
 ###### math
 
-`$sqrt(x float64)`
+**`$sqrt(x float64)`**
 
 Returns square root of `x`.
 
-`$pow(x float64, y float64)`
+**`$pow(x float64, y float64)`**
 
 Returns `x`^`y`.
 
-`$floor(x float64)`
+**`$floor(x float64)`**
 
 Returns nearest downward integer for `x`.
 
-`$abs(x float64)`
+**`$abs(x float64)`**
 
 Returns absolute value of `x`.
 
 ###### arrays
 
-`$len(a []interface{})`
+**`$len(a []interface{})`**
 
 Returns the length of array `a`. 
 
-`$has( a {[]bool, []float64, []string, []nil}, val {bool, float64, string, nil} )`
+**`$has( a {[]bool, []float64, []string, []nil}, val {bool, float64, string, nil} )`**
 
 Checks to see if array `a` contains `val`. Returns bool. `val` cannot be an object.
 
-`$sum(a []float64)`
+**`$sum(a []float64)`**
 
 Returns the sum of array `a`.
 
-`$min(a []float64)`
+**`$min(a []float64)`**
 
 Returns the minumum of array `a`.
 
-`$max(a []float64)`
+**`$max(a []float64)`**
 
 Returns the maximum of array `a`.
 
 ###### objects
 
-`$keys(o object)`
+**`$keys(o object)`**
 
 Returns an array of keys in object `o`.
 
 
-`$exists(o object, key string)`
+**`$exists(o object, key string)`**
 
 Checks to see if `key` exists in map `o`. Returns bool. `$exists()` does a map lookup and is faster than `$has($keys(o), "foo")`
 
 ###### date and time
 
-`$now()`
+**`$now()`**
 
 Returns current system time in float64.
 
-`$parseTime(layout string, t string)`
+**`$parseTime(layout string, t string)`**
 
 Accepts a time layout in golang [time format](http://golang.org/pkg/time/#pkg-constants). t is parsed and returned as epoch milliseconds in float64.
 
-`$fmtTime(layout string, t float64)`
+**`$fmtTime(layout string, t float64)`**
 
 Accepts a time layout in golang [time format](http://golang.org/pkg/time/#pkg-constants). t is expected in epoch milliseconds. Returns a formatted string. 
 
 ###### strings
 
-`$contains(s string, substr string)`
+**`$contains(s string, substr string)`**
 
 see [strings.Contains](http://golang.org/pkg/strings/#Contains)
 
-`$regex(pattern string, s string)`
+**`$regex(pattern string, s string)`**
 
 see [regexp.MatchString](http://golang.org/pkg/regexp/#MatchString). Much slower than `$contains()`
 
