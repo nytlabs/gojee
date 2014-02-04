@@ -186,4 +186,8 @@ evaluates a variable of type interface{} with a *TokenTree generated from `Parse
 * Bracket notation is available for keys that need escaping `.["foo"]["bar"]`]
 * Queries for JSON keys or indices that do not exist return `null` (to test if a key exists, use `$exists`)
 * jee does not support variables, conditional expressions, or assignment 
-* jee is v0.1.0 and may be very quirky in general.
+* jee may be very quirky in general.
+
+### changes
+- **.0.1.1** addition of $bool, $~bool, $num, $str, $now, $fmtTime, $parseTime. Fix for non-alphanumeric characters in JSON keys. 
+- **.0.1.0** initial release
