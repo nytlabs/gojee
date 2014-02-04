@@ -427,6 +427,42 @@ var Tests = []Test{
 		exp:    `$has($keys(.), "arrayString") && $has($keys(.), "nope") `,
 		result: `false`,
 	},
+	Test{
+		exp:    `.#_k__`,
+		result: `1`,
+	},
+	Test{
+		exp:    `$num(.float_str) == 5.123131`,
+		result: `true`,
+	},
+	Test{
+		exp:    `$str($num(.float_str)) == .float_str`,
+		result: `true`,
+	},
+	Test{
+		exp:    `$parseTime("Mon Jan 2 15:04:05 -0700 MST 2006","Wed Jan 1 00:00:00 +0000 GMT 2014") == 1388534400000`,
+		result: `true`,
+	},
+	Test{
+		exp:    `$num($fmtTime("2006", $parseTime("Mon Jan 2 15:04:05 -0700 MST 2006","Wed Jan 1 00:00:00 +0000 GMT 2014"))) == 2014`,
+		result: `true`,
+	},
+	Test{
+		exp:    `$now() > 1388534400000`,
+		result: `true`,
+	},
+	Test{
+		exp:    `$num($fmtTime("2006", $now())) > 2006`,
+		result: `true`,
+	},
+	Test{
+		exp:    `$str(.float_str) == "5.123131"`,
+		result: `true`,
+	},
+	Test{
+		exp:    `$num(.int) == 5`,
+		result: `true`,
+	},
 }
 
 func TestAll(t *testing.T) {
