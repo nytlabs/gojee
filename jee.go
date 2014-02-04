@@ -680,7 +680,7 @@ var unaryFuncs = map[string]func(interface{}) (interface{}, error){
 			return v, nil
 		case nil:
 			return "null", nil
-		case map[string]interface{}:
+		case map[string]interface{}, []interface{}:
 			b, err := json.Marshal(v)
 			return string(b), err
 		}
@@ -697,7 +697,42 @@ var unaryFuncs = map[string]func(interface{}) (interface{}, error){
 				return 1, nil
 			}
 		}
-		return 0, nil
+		return 0.0, nil
+	},
+	"$~bool":func(val interface{}) (interface{}, error) {
+		switch v := val.(type) {
+		case []interface{}:
+			if len(v) > 0 {
+				return true, nil
+			}
+		case map[string]interface{}:
+			return true, nil
+		case float64:
+			if math.IsNaN(v) {
+				return false, nil
+			}
+
+			if v > 0 {
+				return true, nil
+			}
+		case string:
+			if len(v) > 0 {
+				return true, nil
+			}
+		case bool:
+			return v, nil
+		}
+		return false, nil
+	},
+	"$bool":func(val interface{}) (interface{}, error) {
+		switch v := val.(type) {
+		case string:
+			return strconv.ParseBool(v)
+		case bool:
+			return v, nil
+		}
+
+		return nil, nil
 	},
 }
 
@@ -705,11 +740,11 @@ var binaryFuncs = map[string]func(interface{}, interface{}) (interface{}, error)
 	"$parseTime": func(a interface{}, b interface{}) (interface{}, error) {
 		layout, ok := a.(string)
 		if !ok {
-			return nil, errors.New("bad time layout")
+			return nil, nil
 		}
 		value, ok := b.(string)
 		if !ok {
-			return nil, errors.New("bad time")
+			return nil, nil
 		}
 		t, err := time.Parse(layout, value)
 		if err != nil {
@@ -720,12 +755,12 @@ var binaryFuncs = map[string]func(interface{}, interface{}) (interface{}, error)
 	"$fmtTime": func(a interface{}, b interface{}) (interface{}, error) {
 		layout, ok := a.(string)
 		if !ok {
-			return nil, errors.New("bad time layout")
+			return nil, nil
 		}
 
 		t, ok := b.(float64)
 		if !ok {
-			return nil, errors.New("bad time")
+			return nil, nil
 		}
 
 		return time.Unix(0, int64(time.Duration(t)*time.Millisecond)).Format(layout), nil

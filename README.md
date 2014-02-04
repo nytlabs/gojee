@@ -80,9 +80,17 @@ query all objects inside array 'a' for key 'id':
 <br />
 Converts `x` to a float64. If `x` is a bool, 1 is returned for true and 0 for false. If `x` is nil, 0 is returned. 
 <br /><br />
-**`$str(x {bool, float64, string, nil, object))`**
+**`$str(x {bool, float64, string, nil, object, []*))`**
 <br />
-Converts `x` to a string. If `x` is a bool, "true" is returned for true and "false" for false. "null" is returned for nil. If `x` is an object it is marshaled into a JSON string. 
+Converts `x` to a string. If `x` is a bool, "true" is returned for true and "false" for false. "null" is returned for nil. If `x` is an object or an array, it is marshaled into a JSON string. 
+<br /><br />
+**`$bool(x {bool, string})`**
+<br />
+Converts `x` to a bool. See [strconv.ParseBool](http://golang.org/pkg/strconv/#ParseBool)
+<br /><br />
+**`$~bool(x {bool, float64, string, nil, object, []*})`**
+<br />
+Truthy conversion of `x` to a bool. Falsey values:`null`,`NaN`,`0`,`false`, and `arrays with a length of 0`. 
 <br /><br />
 ###### math
 
@@ -138,7 +146,7 @@ Checks to see if `key` exists in map `o`. Returns bool. `$exists()` does a map l
 
 **`$now()`**
 <br />
-Returns current system time in float64.
+Returns current system time in float64 (epoch milliseconds).
 <br /><br />
 **`$parseTime(layout string, t string)`**
 <br />

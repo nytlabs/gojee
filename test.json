@@ -7,6 +7,7 @@
     "string": "hello world",
     "bool": false,
     "nil": null,
+    "empty": [],
     "a": {
         "b": {
             "c": [{
