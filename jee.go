@@ -1,6 +1,7 @@
 package jee
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -8,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 )
 
@@ -150,7 +152,7 @@ func getIdent(r rune) int {
 		return i
 	case unicode.IsNumber(r):
 		return CONST
-	case unicode.IsLetter(r):
+	case unicode.IsLetter(r) || unicode.IsPunct(r) || unicode.IsSymbol(r):
 		return RESERVED
 	case unicode.IsSpace(r):
 		return SPACE
@@ -579,6 +581,12 @@ var opFuncsNil = map[string]func(interface{}, interface{}) interface{}{
 	},
 }
 
+var nullaryFuncs = map[string]func() (interface{}, error){
+	"$now": func() (interface{}, error) {
+		return float64(time.Now().UnixNano() / 1000 / 1000), nil
+	},
+}
+
 var unaryFuncs = map[string]func(interface{}) (interface{}, error){
 	"$sum": func(val interface{}) (interface{}, error) {
 		valsArray, ok := val.([]interface{})
@@ -659,9 +667,69 @@ var unaryFuncs = map[string]func(interface{}) (interface{}, error){
 
 		return keyList, nil
 	},
+	"$str": func(val interface{}) (interface{}, error) {
+		switch v := val.(type) {
+		case float64:
+			return strconv.FormatFloat(v, 'f', -1, 64), nil
+		case bool:
+			if v {
+				return "true", nil
+			}
+			return "false", nil
+		case string:
+			return v, nil
+		case nil:
+			return "null", nil
+		case map[string]interface{}:
+			b, err := json.Marshal(v)
+			return string(b), err
+		}
+		return "", nil
+	},
+	"$num": func(val interface{}) (interface{}, error) {
+		switch v := val.(type) {
+		case float64:
+			return v, nil
+		case string:
+			return strconv.ParseFloat(v, 64)
+		case bool:
+			if v {
+				return 1, nil
+			}
+		}
+		return 0, nil
+	},
 }
 
 var binaryFuncs = map[string]func(interface{}, interface{}) (interface{}, error){
+	"$parseTime": func(a interface{}, b interface{}) (interface{}, error) {
+		layout, ok := a.(string)
+		if !ok {
+			return nil, errors.New("bad time layout")
+		}
+		value, ok := b.(string)
+		if !ok {
+			return nil, errors.New("bad time")
+		}
+		t, err := time.Parse(layout, value)
+		if err != nil {
+			return nil, err
+		}
+		return float64(t.UnixNano() / 1000 / 1000), nil
+	},
+	"$fmtTime": func(a interface{}, b interface{}) (interface{}, error) {
+		layout, ok := a.(string)
+		if !ok {
+			return nil, errors.New("bad time layout")
+		}
+
+		t, ok := b.(float64)
+		if !ok {
+			return nil, errors.New("bad time")
+		}
+
+		return time.Unix(0, int64(time.Duration(t)*time.Millisecond)).Format(layout), nil
+	},
 	"$pow": func(a interface{}, b interface{}) (interface{}, error) {
 		fa, ok := a.(float64)
 		if !ok {
@@ -963,6 +1031,13 @@ func Eval(t *TokenTree, msg BMsg) (interface{}, error) {
 
 		return getKeyValues(t, input)
 	case FUNC:
+		if len(t.Tokens) == 0 {
+			_, ok := nullaryFuncs[tokenVal]
+			if !ok {
+				return nil, errors.New(fmt.Sprintf("func does not exist or wrong num of arguments: %s", tokenVal))
+			}
+			return nullaryFuncs[tokenVal]()
+		}
 		if len(t.Tokens) == 1 {
 			a, err := Eval(t.Tokens[0], msg)
 			if err != nil {
