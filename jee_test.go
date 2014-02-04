@@ -463,6 +463,54 @@ var Tests = []Test{
 		exp:    `$num(.int) == 5`,
 		result: `true`,
 	},
+	Test{
+		exp:    `$num(.bool) == 0`,
+		result: `true`,
+	},
+	Test{
+		exp:    `$num(.a) == 0`,
+		result: `true`,
+	},
+	Test{
+		exp:    `$num(.empty) == 0`,
+		result: `true`,
+	},
+	Test{
+		exp:	`$bool("true") && true`,
+		result: `true`,
+	},
+	Test{
+		exp:	`$bool("false") && true`,
+		result: `false`,
+	},
+	Test{
+		exp:	`$bool(1)`,
+		result: `null`,
+	},
+	Test{
+		exp:	`$bool(null)`,
+		result: `null`,
+	},
+	Test{
+		exp:	`$~bool(null)`,
+		result: `false`,
+	},
+	Test{
+		exp:	`$~bool(.empty)`,
+		result: `false`,
+	},
+	Test{
+		exp:	`$~bool(.a.b.c)`,
+		result: `true`,
+	},
+	Test{
+		exp:	`$~bool("asdsajdasd")`,
+		result: `true`,
+	},
+	Test{
+		exp:	`$~bool(1)`,
+		result: `true`,
+	},
 }
 
 func TestAll(t *testing.T) {
