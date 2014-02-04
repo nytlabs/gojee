@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-var info = `jee 0.1.0`
+var info = `jee 0.1.1`
 
 func main() {
 	var umsg jee.BMsg
