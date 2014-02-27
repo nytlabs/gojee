@@ -574,7 +574,9 @@ var opFuncsNil = map[string]func(interface{}, interface{}) interface{}{
 		if a == nil && b == nil {
 			return true
 		}
-		return a == b
+		
+		// comparing objects is a horrible condition and should be avoided
+		return reflect.DeepEqual(a, b)
 	},
 	"!=": func(a interface{}, b interface{}) interface{} {
 		return a != b
