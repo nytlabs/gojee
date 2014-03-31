@@ -574,7 +574,7 @@ var opFuncsNil = map[string]func(interface{}, interface{}) interface{}{
 		if a == nil && b == nil {
 			return true
 		}
-		
+
 		// comparing objects is a horrible condition and should be avoided
 		return reflect.DeepEqual(a, b)
 	},
@@ -701,7 +701,7 @@ var unaryFuncs = map[string]func(interface{}) (interface{}, error){
 		}
 		return 0.0, nil
 	},
-	"$~bool":func(val interface{}) (interface{}, error) {
+	"$~bool": func(val interface{}) (interface{}, error) {
 		switch v := val.(type) {
 		case []interface{}:
 			if len(v) > 0 {
@@ -726,7 +726,7 @@ var unaryFuncs = map[string]func(interface{}) (interface{}, error){
 		}
 		return false, nil
 	},
-	"$bool":func(val interface{}) (interface{}, error) {
+	"$bool": func(val interface{}) (interface{}, error) {
 		switch v := val.(type) {
 		case string:
 			return strconv.ParseBool(v)
@@ -785,7 +785,7 @@ var binaryFuncs = map[string]func(interface{}, interface{}) (interface{}, error)
 			return nil, nil
 		}
 
-		ma := a.(map[string]interface{})
+		ma, ok := a.(map[string]interface{})
 		if !ok {
 			return nil, nil
 		}
