@@ -1,15 +1,10 @@
 package jee
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"reflect"
-	"regexp"
 	"strconv"
-	"strings"
-	"time"
 	"unicode"
 )
 
@@ -508,349 +503,6 @@ func Parser(tokens []*Token) (*TokenTree, error) {
 	return tree, nil
 }
 
-var opFuncsFloat = map[string]func(float64, float64) interface{}{
-	"+": func(a float64, b float64) interface{} {
-		return a + b
-	},
-	"-": func(a float64, b float64) interface{} {
-		return a - b
-	},
-	"*": func(a float64, b float64) interface{} {
-		return a * b
-	},
-	"/": func(a float64, b float64) interface{} {
-		return a / b
-	},
-	"==": func(a float64, b float64) interface{} {
-		return a == b
-	},
-	">=": func(a float64, b float64) interface{} {
-		return a >= b
-	},
-	">": func(a float64, b float64) interface{} {
-		return a > b
-	},
-	"<": func(a float64, b float64) interface{} {
-		return a < b
-	},
-	"<=": func(a float64, b float64) interface{} {
-		return a <= b
-	},
-	"!=": func(a float64, b float64) interface{} {
-		return a != b
-	},
-}
-
-var opFuncsString = map[string]func(string, string) interface{}{
-	"+": func(a string, b string) interface{} {
-		return a + b
-	},
-	"==": func(a string, b string) interface{} {
-		return a == b
-	},
-	"!=": func(a string, b string) interface{} {
-		return a != b
-	},
-}
-
-var opFuncsBool = map[string]func(bool, bool) interface{}{
-	"&&": func(a bool, b bool) interface{} {
-		return a && b
-	},
-	"||": func(a bool, b bool) interface{} {
-		return a || b
-	},
-	"==": func(a bool, b bool) interface{} {
-		return a == b
-	},
-	"!=": func(a bool, b bool) interface{} {
-		return a != b
-	},
-}
-
-// this is a catch for types not bool, array, string, float
-var opFuncsNil = map[string]func(interface{}, interface{}) interface{}{
-	"==": func(a interface{}, b interface{}) interface{} {
-		if a == nil && b == nil {
-			return true
-		}
-
-		// comparing objects is a horrible condition and should be avoided
-		return reflect.DeepEqual(a, b)
-	},
-	"!=": func(a interface{}, b interface{}) interface{} {
-		return a != b
-	},
-}
-
-var nullaryFuncs = map[string]func() (interface{}, error){
-	"$now": func() (interface{}, error) {
-		return float64(time.Now().UnixNano() / 1000 / 1000), nil
-	},
-}
-
-var unaryFuncs = map[string]func(interface{}) (interface{}, error){
-	"$sum": func(val interface{}) (interface{}, error) {
-		valsArray, ok := val.([]interface{})
-		if !ok {
-			return nil, nil
-		}
-		sum := 0.0
-		for _, i := range valsArray {
-			sum += i.(float64)
-		}
-		return sum, nil
-	},
-	"$min": func(val interface{}) (interface{}, error) {
-		valsArray, ok := val.([]interface{})
-		if !ok {
-			return nil, nil
-		}
-
-		min := valsArray[0].(float64)
-		for i := 1; i < len(valsArray); i++ {
-			min = math.Min(min, valsArray[i].(float64))
-		}
-		return min, nil
-	},
-	"$max": func(val interface{}) (interface{}, error) {
-		valsArray, ok := val.([]interface{})
-		if !ok {
-			return nil, nil
-		}
-
-		max := valsArray[0].(float64)
-		for i := 1; i < len(valsArray); i++ {
-			max = math.Max(max, valsArray[i].(float64))
-		}
-		return max, nil
-	},
-	"$len": func(val interface{}) (interface{}, error) {
-		valsArray, ok := val.([]interface{})
-		if !ok {
-			return nil, nil
-		}
-
-		return float64(len(valsArray)), nil
-	},
-	"$sqrt": func(val interface{}) (interface{}, error) {
-		f, ok := val.(float64)
-		if !ok || f < 0 {
-			return nil, nil
-		}
-
-		return math.Sqrt(f), nil
-	},
-	"$abs": func(val interface{}) (interface{}, error) {
-		f, ok := val.(float64)
-		if !ok {
-			return nil, nil
-		}
-		return math.Abs(f), nil
-	},
-	"$floor": func(val interface{}) (interface{}, error) {
-		f, ok := val.(float64)
-		if !ok {
-			return nil, nil
-		}
-
-		return math.Floor(f), nil
-	},
-	"$keys": func(val interface{}) (interface{}, error) {
-		var keyList []interface{}
-		m, ok := val.(map[string]interface{})
-		if !ok {
-			return nil, nil
-		}
-
-		for k, _ := range m {
-			keyList = append(keyList, k)
-		}
-
-		return keyList, nil
-	},
-	"$str": func(val interface{}) (interface{}, error) {
-		switch v := val.(type) {
-		case float64:
-			return strconv.FormatFloat(v, 'f', -1, 64), nil
-		case bool:
-			if v {
-				return "true", nil
-			}
-			return "false", nil
-		case string:
-			return v, nil
-		case nil:
-			return "null", nil
-		case map[string]interface{}, []interface{}:
-			b, err := json.Marshal(v)
-			return string(b), err
-		}
-		return "", nil
-	},
-	"$num": func(val interface{}) (interface{}, error) {
-		switch v := val.(type) {
-		case float64:
-			return v, nil
-		case string:
-			return strconv.ParseFloat(v, 64)
-		case bool:
-			if v {
-				return 1, nil
-			}
-		}
-		return 0.0, nil
-	},
-	"$~bool": func(val interface{}) (interface{}, error) {
-		switch v := val.(type) {
-		case []interface{}:
-			if len(v) > 0 {
-				return true, nil
-			}
-		case map[string]interface{}:
-			return true, nil
-		case float64:
-			if math.IsNaN(v) {
-				return false, nil
-			}
-
-			if v > 0 {
-				return true, nil
-			}
-		case string:
-			if len(v) > 0 {
-				return true, nil
-			}
-		case bool:
-			return v, nil
-		}
-		return false, nil
-	},
-	"$bool": func(val interface{}) (interface{}, error) {
-		switch v := val.(type) {
-		case string:
-			return strconv.ParseBool(v)
-		case bool:
-			return v, nil
-		}
-
-		return nil, nil
-	},
-}
-
-var binaryFuncs = map[string]func(interface{}, interface{}) (interface{}, error){
-	"$parseTime": func(a interface{}, b interface{}) (interface{}, error) {
-		layout, ok := a.(string)
-		if !ok {
-			return nil, nil
-		}
-		value, ok := b.(string)
-		if !ok {
-			return nil, nil
-		}
-		t, err := time.Parse(layout, value)
-		if err != nil {
-			return nil, err
-		}
-		return float64(t.UnixNano() / 1000 / 1000), nil
-	},
-	"$fmtTime": func(a interface{}, b interface{}) (interface{}, error) {
-		layout, ok := a.(string)
-		if !ok {
-			return nil, nil
-		}
-
-		t, ok := b.(float64)
-		if !ok {
-			return nil, nil
-		}
-
-		return time.Unix(0, int64(time.Duration(t)*time.Millisecond)).Format(layout), nil
-	},
-	"$pow": func(a interface{}, b interface{}) (interface{}, error) {
-		fa, ok := a.(float64)
-		if !ok {
-			return nil, nil
-		}
-		fb, ok := b.(float64)
-		if !ok {
-			return nil, nil
-		}
-
-		return math.Pow(fa, fb), nil
-	},
-	"$exists": func(a interface{}, b interface{}) (interface{}, error) {
-		sb, ok := b.(string)
-		if !ok {
-			return nil, nil
-		}
-
-		ma, ok := a.(map[string]interface{})
-		if !ok {
-			return nil, nil
-		}
-
-		_, ok = ma[sb]
-		if ok {
-			return true, nil
-		}
-		return false, nil
-	},
-	"$contains": func(a interface{}, b interface{}) (interface{}, error) {
-		sa, ok := a.(string)
-		if !ok {
-			return nil, nil
-		}
-
-		sb, ok := b.(string)
-		if !ok {
-			return nil, nil
-		}
-		return strings.Contains(sa, sb), nil
-	},
-	"$regex": func(a interface{}, b interface{}) (interface{}, error) {
-		sa, ok := a.(string)
-		if !ok {
-			return nil, nil
-		}
-
-		sb, ok := b.(string)
-		if !ok {
-			return nil, nil
-		}
-
-		return regexp.MatchString(sb, sa)
-	},
-	"$has": func(a interface{}, b interface{}) (interface{}, error) {
-		s, ok := a.([]interface{})
-		if !ok {
-			return nil, nil
-		}
-
-		for _, e := range s {
-			switch c := e.(type) {
-			case string:
-				if c == b.(string) {
-					return true, nil
-				}
-			case float64:
-				if c == b.(float64) {
-					return true, nil
-				}
-			case bool:
-				if c == b.(bool) {
-					return true, nil
-				}
-			default:
-				if a == nil && b == nil {
-					return true, nil
-				}
-			}
-		}
-		return false, nil
-	},
-}
-
 func getKeyValues(t *TokenTree, input BMsg) (interface{}, error) {
 	s, ok := t.Value.(string)
 
@@ -931,6 +583,14 @@ func getKeyValues(t *TokenTree, input BMsg) (interface{}, error) {
 }
 
 func Eval(t *TokenTree, msg BMsg) (interface{}, error) {
+	return EvalCustom(nil, t, msg)
+}
+
+func EvalCustom(opMap *OpMap, t *TokenTree, msg BMsg) (interface{}, error) {
+	if opMap == nil {
+		opMap = defaultOpMap
+	}
+
 	var tokenVal string
 
 	switch t.Type {
@@ -947,7 +607,7 @@ func Eval(t *TokenTree, msg BMsg) (interface{}, error) {
 		if len(t.Tokens) == 1 {
 			switch tokenVal {
 			case "-":
-				r, err := Eval(t.Tokens[0], msg)
+				r, err := EvalCustom(opMap, t.Tokens[0], msg)
 				if err != nil {
 					return nil, err
 				}
@@ -960,7 +620,7 @@ func Eval(t *TokenTree, msg BMsg) (interface{}, error) {
 				return -1 * f, nil
 
 			case "!":
-				r, err := Eval(t.Tokens[0], msg)
+				r, err := EvalCustom(opMap, t.Tokens[0], msg)
 				if err != nil {
 					return nil, err
 				}
@@ -975,12 +635,12 @@ func Eval(t *TokenTree, msg BMsg) (interface{}, error) {
 			break
 		}
 		if len(t.Tokens) == 2 {
-			a, err := Eval(t.Tokens[0], msg)
+			a, err := EvalCustom(opMap, t.Tokens[0], msg)
 			if err != nil {
 				return nil, err
 			}
 
-			b, err := Eval(t.Tokens[1], msg)
+			b, err := EvalCustom(opMap, t.Tokens[1], msg)
 			if err != nil {
 				return nil, err
 			}
@@ -998,12 +658,12 @@ func Eval(t *TokenTree, msg BMsg) (interface{}, error) {
 					return nil, errors.New(fmt.Sprintf("cannot compare types: %s, %s", reflect.TypeOf(a), reflect.TypeOf(b)))
 				}
 
-				_, ok = opFuncsFloat[tokenVal]
+				_, ok = opMap.Float[tokenVal]
 				if !ok {
 					return nil, errors.New(fmt.Sprintf("invalid operator for type: %s, %s", tokenVal, reflect.TypeOf(a)))
 				}
 
-				return opFuncsFloat[tokenVal](ta, bf), nil
+				return opMap.Float[tokenVal](ta, bf), nil
 			case string:
 				bs, ok := b.(string)
 				if !ok && tokenVal == "!=" {
@@ -1014,12 +674,12 @@ func Eval(t *TokenTree, msg BMsg) (interface{}, error) {
 					return nil, errors.New(fmt.Sprintf("cannot compare types: %s, %s", reflect.TypeOf(a), reflect.TypeOf(b)))
 				}
 
-				_, ok = opFuncsString[tokenVal]
+				_, ok = opMap.String[tokenVal]
 				if !ok {
 					return nil, errors.New(fmt.Sprintf("invalid operator for type: %s, %s", tokenVal, reflect.TypeOf(a)))
 				}
 
-				return opFuncsString[tokenVal](ta, bs), nil
+				return opMap.String[tokenVal](ta, bs), nil
 			case bool:
 				bb, ok := b.(bool)
 				if !ok && tokenVal == "!=" {
@@ -1030,19 +690,19 @@ func Eval(t *TokenTree, msg BMsg) (interface{}, error) {
 					return nil, errors.New(fmt.Sprintf("cannot compare types: %s, %s", reflect.TypeOf(a), reflect.TypeOf(b)))
 				}
 
-				_, ok = opFuncsBool[tokenVal]
+				_, ok = opMap.Bool[tokenVal]
 				if !ok {
 					return nil, errors.New(fmt.Sprintf("invalid operator for type: %s, %s", tokenVal, reflect.TypeOf(a)))
 				}
 
-				return opFuncsBool[tokenVal](ta, bb), nil
+				return opMap.Bool[tokenVal](ta, bb), nil
 			default:
-				_, ok := opFuncsNil[tokenVal]
+				_, ok := opMap.Nil[tokenVal]
 				if !ok {
 					return nil, errors.New(fmt.Sprintf("invalid operator for type: %s, %s", tokenVal, reflect.TypeOf(a)))
 				}
 
-				return opFuncsNil[tokenVal](a, b), nil
+				return opMap.Nil[tokenVal](a, b), nil
 			}
 		}
 	case S_STR, D_STR, CONST, RESERVED:
@@ -1052,7 +712,7 @@ func Eval(t *TokenTree, msg BMsg) (interface{}, error) {
 
 		for _, sub := range t.Tokens {
 			if len(sub.Tokens) > 0 {
-				key, err := Eval(sub.Tokens[0], input)
+				key, err := EvalCustom(opMap, sub.Tokens[0], input)
 				if err != nil {
 					return nil, err
 				}
@@ -1069,47 +729,47 @@ func Eval(t *TokenTree, msg BMsg) (interface{}, error) {
 		return getKeyValues(t, input)
 	case FUNC:
 		if len(t.Tokens) == 0 {
-			_, ok := nullaryFuncs[tokenVal]
+			_, ok := opMap.Nullary[tokenVal]
 			if !ok {
 				return nil, errors.New(fmt.Sprintf("func does not exist or wrong num of arguments: %s", tokenVal))
 			}
-			return nullaryFuncs[tokenVal]()
+			return opMap.Nullary[tokenVal]()
 		}
 		if len(t.Tokens) == 1 {
-			a, err := Eval(t.Tokens[0], msg)
+			a, err := EvalCustom(opMap, t.Tokens[0], msg)
 			if err != nil {
 				return nil, err
 			}
 
-			_, ok := unaryFuncs[tokenVal]
+			_, ok := opMap.Unary[tokenVal]
 			if !ok {
 				return nil, errors.New(fmt.Sprintf("func does not exist or wrong num of arguments: %s", tokenVal))
 			}
 
-			return unaryFuncs[tokenVal](a)
+			return opMap.Unary[tokenVal](a)
 		} else if len(t.Tokens) == 3 {
 
-			a, err := Eval(t.Tokens[0], msg)
+			a, err := EvalCustom(opMap, t.Tokens[0], msg)
 			if err != nil {
 				return nil, err
 			}
 
-			b, err := Eval(t.Tokens[2], msg)
+			b, err := EvalCustom(opMap, t.Tokens[2], msg)
 			if err != nil {
 				return nil, err
 			}
 
-			_, ok := binaryFuncs[tokenVal]
+			_, ok := opMap.Binary[tokenVal]
 			if !ok {
 				return nil, errors.New(fmt.Sprintf("func does not exist or wrong num of arguments: %s", tokenVal))
 			}
 
-			return binaryFuncs[tokenVal](a, b)
+			return opMap.Binary[tokenVal](a, b)
 		}
 		return nil, errors.New(fmt.Sprintf("func does not exist or wrong num of arguments: %s", tokenVal))
 	default:
 		if len(t.Tokens) > 0 {
-			return Eval(t.Tokens[0], msg)
+			return EvalCustom(opMap, t.Tokens[0], msg)
 		}
 	}
 

@@ -189,5 +189,6 @@ evaluates a variable of type interface{} with a *TokenTree generated from `Parse
 * jee may be very quirky in general.
 
 ### changes
+- **.0.1.2** addition of support for custom functions via the EvalCustom func 
 - **.0.1.1** addition of $bool, $~bool, $num, $str, $now, $fmtTime, $parseTime. Fix for non-alphanumeric characters in JSON keys. 
 - **.0.1.0** initial release
