@@ -444,7 +444,7 @@ var Tests = []Test{
 		result: `true`,
 	},
 	Test{
-		exp:    `$num($fmtTime("2006", $parseTime("Mon Jan 2 15:04:05 -0700 MST 2006","Wed Jan 1 00:00:00 +0000 GMT 2014"))) == 2014`,
+		exp:    `$num($fmtTime("2006", $parseTime("Mon Jan 2 15:04:05 -0700 MST 2006","Wed Jan 2 00:00:00 +0000 GMT 2014"))) == 2014`,
 		result: `true`,
 	},
 	Test{
