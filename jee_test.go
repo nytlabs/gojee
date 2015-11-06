@@ -476,39 +476,39 @@ var Tests = []Test{
 		result: `true`,
 	},
 	Test{
-		exp:	`$bool("true") && true`,
+		exp:    `$bool("true") && true`,
 		result: `true`,
 	},
 	Test{
-		exp:	`$bool("false") && true`,
+		exp:    `$bool("false") && true`,
 		result: `false`,
 	},
 	Test{
-		exp:	`$bool(1)`,
+		exp:    `$bool(1)`,
 		result: `null`,
 	},
 	Test{
-		exp:	`$bool(null)`,
+		exp:    `$bool(null)`,
 		result: `null`,
 	},
 	Test{
-		exp:	`$~bool(null)`,
+		exp:    `$~bool(null)`,
 		result: `false`,
 	},
 	Test{
-		exp:	`$~bool(.empty)`,
+		exp:    `$~bool(.empty)`,
 		result: `false`,
 	},
 	Test{
-		exp:	`$~bool(.a.b.c)`,
+		exp:    `$~bool(.a.b.c)`,
 		result: `true`,
 	},
 	Test{
-		exp:	`$~bool("asdsajdasd")`,
+		exp:    `$~bool("asdsajdasd")`,
 		result: `true`,
 	},
 	Test{
-		exp:	`$~bool(1)`,
+		exp:    `$~bool(1)`,
 		result: `true`,
 	},
 }
@@ -532,6 +532,66 @@ func TestAll(t *testing.T) {
 		}
 
 		result, err := Eval(tree, umsg)
+
+		if err != nil {
+			t.Error("failed eval")
+		}
+
+		var rmsg BMsg
+		err = json.Unmarshal([]byte(test.result), &rmsg)
+		if err != nil {
+			t.Error(err, "bad test")
+		}
+
+		if reflect.DeepEqual(rmsg, result) {
+			fmt.Println("\x1b[32;1mOK\x1b[0m", test.exp)
+		} else {
+			t.Fail()
+			fmt.Println("\x1b[31;1m", "FAIL", "\x1b[0m", rmsg, "\t", result)
+			fmt.Println("Expected Value", rmsg, "\tResult Value:", result)
+			fmt.Println("Expected Type: ", reflect.TypeOf(rmsg), "\tResult Type:", reflect.TypeOf(result))
+		}
+	}
+}
+
+var CustomTests = []Test{
+	Test{
+		exp:    `$unary('hello') == 'hello!'`,
+		result: `true`,
+	},
+	Test{
+		exp:    `$binary('hello', 'world') == 'hello world!'`,
+		result: `true`,
+	},
+}
+
+func TestCustom(t *testing.T) {
+	var umsg BMsg
+
+	testFile, _ := ioutil.ReadFile("test.json")
+
+	json.Unmarshal(testFile, &umsg)
+
+	opMap := DefaultOpMap()
+	opMap.AddUnary("$unary", func(i interface{}) (interface{}, error) {
+		return fmt.Sprintf("%v!", i), nil
+	})
+	opMap.AddBinary("$binary", func(i, j interface{}) (interface{}, error) {
+		return fmt.Sprintf("%v %v!", i, j), nil
+	})
+
+	for _, test := range CustomTests {
+		tokenized, err := Lexer(test.exp)
+		if err != nil {
+			t.Error("failed lex")
+		}
+
+		tree, err := Parser(tokenized)
+		if err != nil {
+			t.Error("failed parse")
+		}
+
+		result, err := EvalCustom(opMap, tree, umsg)
 
 		if err != nil {
 			t.Error("failed eval")
