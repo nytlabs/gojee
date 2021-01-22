@@ -158,7 +158,7 @@ Accepts a time layout in golang [time format](http://golang.org/pkg/time/#pkg-co
 <br /><br />
 ###### strings
 
-**`split(s string, separator string})`**
+**`$split(s string, separator string})`**
 <br />
 Return an array of strings. 
 <br /><br />
