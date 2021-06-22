@@ -846,6 +846,9 @@ var binaryFuncs = map[string]func(interface{}, interface{}) (interface{}, error)
 		if !ok {
 			return nil, nil
 		}
+		if b == nil {
+			return false, nil
+		}
 
 		for _, e := range s {
 			switch c := e.(type) {
