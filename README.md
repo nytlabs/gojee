@@ -158,6 +158,10 @@ Accepts a time layout in golang [time format](http://golang.org/pkg/time/#pkg-co
 <br /><br />
 ###### strings
 
+**`$split(s string, separator string})`**
+<br />
+Return an array of strings. 
+<br /><br />
 **`$contains(s string, substr string)`**
 <br />
 see [strings.Contains](http://golang.org/pkg/strings/#Contains)

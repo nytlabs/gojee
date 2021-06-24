@@ -404,6 +404,18 @@ var Tests = []Test{
 		result: `true`,
 	},
 	Test{
+		exp:    `$has($split("arrayString, arrayString2, arrayString3", ","), "arrayString")`,
+		result: `true`,
+	},
+	Test{
+		exp:    `$has($split("arrayString, arrayString2, arrayString3", ","), "nope")`,
+		result: `false`,
+	},
+	Test{
+		exp:    `$has($split("arrayString, arrayString2, arrayString3", ","), null)`,
+		result: `false`,
+	},
+	Test{
 		exp:    `$has($keys(.), "nope")`,
 		result: `false`,
 	},

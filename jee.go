@@ -754,6 +754,26 @@ var binaryFuncs = map[string]func(interface{}, interface{}) (interface{}, error)
 		}
 		return float64(t.UnixNano() / 1000 / 1000), nil
 	},
+	"$split": func(val interface{}, b interface{}) (interface{}, error) {
+		sa, ok := val.(string)
+		if !ok {
+			return nil, nil
+		}
+
+		sb, ok := b.(string)
+		if !ok {
+			return nil, nil
+		}
+
+		var list []interface{}
+		stringList := strings.Split(sa, sb)
+
+		for _ , k := range stringList {
+			list = append(list, k)
+		}
+
+		return list, nil
+	},
 	"$fmtTime": func(a interface{}, b interface{}) (interface{}, error) {
 		layout, ok := a.(string)
 		if !ok {
@@ -825,6 +845,9 @@ var binaryFuncs = map[string]func(interface{}, interface{}) (interface{}, error)
 		s, ok := a.([]interface{})
 		if !ok {
 			return nil, nil
+		}
+		if b == nil {
+			return false, nil
 		}
 
 		for _, e := range s {
